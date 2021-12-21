@@ -2,9 +2,6 @@
 
 using namespace std;
 
-int main() {
-
-  cout << "Test" << endl;
-  
+int main() {  
   return EXIT_SUCCESS;
 }
