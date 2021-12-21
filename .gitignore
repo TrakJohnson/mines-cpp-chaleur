@@ -1,2 +1,13 @@
 build/
+.cache/
+.idea/
+
+# emacs backup files
 *~
+
+# personal documenst
+*.pdf
+*.org
+
+# for clangd, generated with cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+compile_commands.json
