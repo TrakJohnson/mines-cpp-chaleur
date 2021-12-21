@@ -32,7 +32,7 @@ TEST_CASE("matrix operations") {
     SUBCASE("matrix product") {
       Matrix v1(1, 3, 1);
       CHECK(id3 * v1 == v1);
-      CHECK(m1 * id3 == id3);
+      CHECK(m1 * id3 == m1);
       
       Matrix m3({{1., 2., 3.}, {2., 3., 4.}});
       Matrix m4({{2., 3.}, {3., 4.}, {4., 5.}});
@@ -50,7 +50,7 @@ TEST_CASE("matrix operations") {
     }
 
     SUBCASE("scalar product") {
-      CHECK(4. * Matrix::identity(2) == Matrix({{2., 0.}, {0., 2.}}));
+      CHECK(2. * Matrix::identity(2) == Matrix({{2., 0.}, {0., 2.}}));
       CHECK(2 * m1 == m2);
       CHECK(id3 * 3. == 3. * id3);
     }
