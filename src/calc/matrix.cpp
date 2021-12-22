@@ -6,6 +6,12 @@
 
 using namespace std;
 
+Matrix::Matrix(const Matrix &m) {
+  this->content = m.content;
+  this->nLines = m.nLines;
+  this->nCols = m.nCols;
+}
+
 Matrix::Matrix(const double &x, const int &_nLines, const int &_nCols) {
   vector<double> v(_nLines * _nCols, x);
   this->content = v;
@@ -21,8 +27,7 @@ Matrix::Matrix(const double &x, const int &_nLinesCols) {
 }
 
 Matrix::Matrix(const vector<vector<double>> &vIn) {
-  // v is a vector of lines
-  // must check
+  // TODO must check
   // - none of the dimensions is 0
   // - each line has same length
   this->nLines = vIn.size();
@@ -33,6 +38,19 @@ Matrix::Matrix(const vector<vector<double>> &vIn) {
   for (int i = 0; i < nLines; i++) {
     for (int j = 0; j < nCols; j++) {
       this->set(i, j, vIn.at(i).at(j));
+    }
+  }
+}
+
+Matrix::Matrix(function<double(int i, int j)> f, const int &_nLines, const int &_nCols) {
+  this->nLines = _nLines;
+  this->nCols = _nCols;
+  vector<double> v(_nLines * _nCols);
+  this->content = v;
+  // TODO find a way to use map
+  for (int i = 0; i < _nLines; i++) {
+    for (int j = 0; j < _nCols; j++) {
+      this->set(i, j, f(i, j));
     }
   }
 }
@@ -55,6 +73,35 @@ double Matrix::operator()(int i, int j) const { return this->get(i, j); }
 
 void Matrix::set(int i, int j, double val) {
   this->content[i * this->nCols + j] = val;
+}
+
+Matrix Matrix::transpose() {
+  return Matrix([this](int i, int j) -> double { return this->get(j, i); }, this->nCols, this->nLines);
+}
+
+Matrix Matrix::extractLine(int i) {
+  return Matrix([this, i](int dummy, int j) -> double { return this->get(i, j); }, 1, this->shape().second);
+}
+
+Matrix Matrix::extractLineAsCol(int i) {
+  return this->extractLine(i).transpose();
+}
+
+Matrix Matrix::extractCol(int j) {
+  return Matrix([this, j](int i, int dummy) -> double { return this->get(i, j); }, this->shape().first, 1);
+}
+
+void Matrix::setLine(int i, const vector<double> &v) {
+  for (int j = 0; j < this->nCols; j++) {
+    this->set(i, j, v.at(j));
+  }
+}
+
+// TODO: template this
+void Matrix::setLine(int i, const Matrix &v) {
+  for (int j = 0; j < this->nCols; j++) {
+    this->set(i, j, v(0, j));
+  }
 }
 
 Matrix operator+(Matrix a, const Matrix &b) {
@@ -88,7 +135,7 @@ Matrix operator*(const Matrix &a, const Matrix &b) {
     for (int j = 0; j < b.shape().second; j++) {
       double s{0.};
       for (int k = 0; k < a.shape().second; k++) {
-        s += a.get(i, k) * b.get(k, j);
+        s += a(i, k) * b(k, j);
       }
       result.set(i, j, s);
     }
@@ -101,7 +148,7 @@ Matrix operator*(Matrix a, double lambda) {
   auto [l, c] = a.shape();
   for (int i = 0; i < l; i++) {
     for (int j = 0; j < c; j++) {
-      a.set(i, j, lambda * a.get(i, j));
+      a.set(i, j, lambda * a(i, j));
     }
   }
   return a;
@@ -116,7 +163,7 @@ bool operator==(const Matrix &a, const Matrix &b) {
 
   for (int i = 0; i < a.shape().first; i++) {
     for (int j = 0; j < a.shape().second; j++) {
-      if (a.get(i, j) != b.get(i, j)) {
+      if (a(i, j) != b(i, j)) {
 	return false;
       }
     }
@@ -130,7 +177,7 @@ ostream &operator<<(ostream &os, const Matrix &m) {
   auto [l, c] = m.shape();
   for (int i = 0; i < l; i++) {
     for (int j = 0; j < c; j++) {
-      os << m.get(i, j);
+      os << m(i, j);
       if (j < c - 1) {
         os << " ";
       }
