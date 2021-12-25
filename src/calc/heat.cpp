@@ -31,11 +31,14 @@ Matrix HeatSystem1D::spaceDiscretize(function<double(double)> f) {
 Matrix HeatSystem1D::generateKMatrix() {
   Matrix dVector = this->spaceDiscretize(this->dFunc);
   /*
+
   À vérifier, mais deux modifications que j'ai dû apporter à l'énoncé:
   - il faut diviser par deltax^2 la dérivée
   - il y a une erreur de signe ?
     avec définition de K de l'énoncé, on a plutôt
+
       T_{i+1} = T_i + (deltat/deltax^2) * K * T_i
+
   - on s'arrange pour que x_0(t_{i+1}) = x_0(t_{i}), x_N de même
     pour cela, on modifie la première et dernière ligne de K, par ex:
 
@@ -72,10 +75,7 @@ Matrix HeatSystem1D::solve_explicit() {
   if (this->boundaryConditions) {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
-  } else {
-    cout << "no boundary conditions" << endl;
   }
-  cout << initial << endl;
   ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
   auto df = [k, this](Matrix x) -> Matrix {
