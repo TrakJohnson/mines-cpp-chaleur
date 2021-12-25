@@ -1,4 +1,5 @@
 #include <functional>
+#include <string>
 #include "calc/matrix.h"
 #include "calc/ode.h"
 
@@ -15,17 +16,17 @@ ODESolver::ODESolver(double _time0, double _timeN, double _deltaT, const Matrix 
   this->n = (timeN - time0)/deltaT;
 }
 
+// TODO replace string with template ?
 Matrix ODESolver::solve(function<Matrix(Matrix, double)> f) {
-  int dim {this->initialX.shape().first};  // dimension de l'ev
-  Matrix results(0., this->n, dim);    // chaque ligne est une photo à l'instant t_i
-  Matrix currentX {this->initialX};
+  int dim {this->initialX.shape().first};  // dimension de l'ev dans lequel on résout
+  Matrix results(0., this->n, dim);        // chaque ligne est une photo à l'instant t_i
+  Matrix currentX {this->initialX};        // conditions initiales à t = 0
   results.setLine(0, currentX);
   
   for (unsigned int i = 1; i < this->n; i++) {
     currentX = f(currentX, this->deltaT);
     results.setLine(i, currentX);
   }
-
   return results;
 }
 

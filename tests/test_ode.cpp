@@ -17,4 +17,14 @@ TEST_CASE("initialize solver") {
   CHECK(diff(9, 0) < 0.11);
 }
 
+// TEST_CASE("boundary conditions") {
+//   Matrix v1(vector<vector<double>> {{0.}, {1.}, {0.}});
+//   ODESolver solver(0., 1., 0.2, v1);
+//   // test sur x' = x, x(0) = 1
+//   Matrix r = solver.solve_euler_explicit([](Matrix x) -> Matrix { return x; },
+// 					 true, 0., 0.);
+//   CHECK(r(r.shape().first - 1, 0) == 0);
+//   CHECK(r(r.shape().first - 1, 2) == 0);
+// }
+
 
