@@ -70,6 +70,15 @@ double Matrix::get(int line, int col) const {
 }
 
 double Matrix::operator()(int i, int j) const { return this->get(i, j); }
+double Matrix::operator()(int i) const {
+  if (this->nCols == 1) {
+    return this->get(i, 0);
+  } else if (this->nLines == 1) {
+    return this->get(0, i);
+  } else {
+    throw runtime_error("Attempted to get value with vector notation on non-vector");
+  }
+}
 
 void Matrix::set(int i, int j, double val) {
   this->content[i * this->nCols + j] = val;

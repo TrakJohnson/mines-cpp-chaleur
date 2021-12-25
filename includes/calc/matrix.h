@@ -26,6 +26,7 @@ public:
   
   pair<int, int> shape() const;
   double operator()(int i, int j) const;
+  double operator()(int i) const;
   void set(int line, int col, double value);
   // TODO: OK THIS WORKS BUT WHY ?
   Matrix& operator=(const Matrix &m) = default;

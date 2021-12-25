@@ -16,6 +16,10 @@ TEST_CASE("initialize matrix") {
 
   Matrix m4([](int i, int j) -> double { return i == j; }, 3, 3);
   CHECK(m4 == Matrix::identity(3));
+
+  Matrix v1({{0., 1., 2.}});
+  Matrix v2{v1.transpose()};
+  CHECK(v1(1) == v2(1));
 }
 
 TEST_CASE("matrix algebra") {
