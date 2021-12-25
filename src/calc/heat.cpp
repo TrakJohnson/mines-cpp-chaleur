@@ -31,11 +31,19 @@ Matrix HeatSystem1D::spaceDiscretize(function<double(double)> f) {
 Matrix HeatSystem1D::generateKMatrix() {
   Matrix dVector = this->spaceDiscretize(this->dFunc);
   /*
-  À vérifier, mais deux modifications que j'ai dû apporté à l'énoncé:
-  - il faut diviser par deltax la dérivée
-  - il y a une erreur de signe ? avec définition de K de l'énoncé, on a plutôt
-      T_{i+1} = T_i + (deltat/deltax) * K * T_i
-  - on s'arrange
+  À vérifier, mais deux modifications que j'ai dû apporter à l'énoncé:
+  - il faut diviser par deltax^2 la dérivée
+  - il y a une erreur de signe ?
+    avec définition de K de l'énoncé, on a plutôt
+      T_{i+1} = T_i + (deltat/deltax^2) * K * T_i
+  - on s'arrange pour que x_0(t_{i+1}) = x_0(t_{i}), x_N de même
+    pour cela, on modifie la première et dernière ligne de K, par ex:
+
+        |  1  0  0  0 |
+    K = |  1 -2  1  0 |
+        |  0  1 -2  1 |
+        |  0  0  0  1 |
+
   */
   return Matrix(
       [dVector, this](unsigned int i, unsigned int j) -> double {
