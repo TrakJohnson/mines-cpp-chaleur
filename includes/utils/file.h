@@ -1,4 +1,5 @@
 #include <string>
 #include "calc/matrix.h"
+#include "calc/heat.h"
 
-void writeMatrixToFile(Matrix m, string fileName);
+void writeMatrixToFile(const Matrix &m, HeatSystem1D sys, string fileName);
