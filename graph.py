@@ -1,13 +1,16 @@
+import sys
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
 ## Données exportées par le C++
-FILENAME = "build/euler_explicite.txt"
+FILENAME = sys.argv[1]
 # metadata
 with open(FILENAME) as f:
-    (t0, tN, deltaTime), (x0, xN, deltaX), *_ = [list(map(float, i.split(" "))) for i in f.readlines()]
+    (t0, tN, deltaTime), (x0, xN, deltaX), *_ = [
+        list(map(float, i.split(" "))) for i in f.readlines()
+    ]
 
 # data
 m = pd.read_csv(FILENAME, skiprows=[0,1], sep=" ").to_numpy()
@@ -34,6 +37,6 @@ for row, c in zip(m, colors):
 
 ax[0].set_xlabel('x')
 ax[0].set_xlim([x0, xN])
-ax[0].set_ylabel('Température (°C)')
+ax[0].set_ylabel('Température (K)')
 
 plt.show()
