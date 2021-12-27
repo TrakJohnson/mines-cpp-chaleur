@@ -18,6 +18,8 @@ public:
   Matrix(const double &x, const int &nLinesCols);
   // Matrix from 2D vector
   Matrix(const vector<vector<double>> &vIn);
+  // Matrix of size (n, 1) from a vector with n elements
+  Matrix(const vector<double> &vIn);
   // This constructor takes f : (i, j) -> x
   // and gives M = (f(i, j))_{i,j}
   Matrix(function<double(int i, int j)> f, const int &nLines, const int &lCos);
@@ -31,14 +33,18 @@ public:
   // TODO: OK THIS WORKS BUT WHY ?
   Matrix& operator=(const Matrix &m) = default;
   
-  Matrix transpose();
+  Matrix transpose() const;
   // TODO: these functions might induce a lot of copies?
   Matrix extractLine(int i);
   Matrix extractLineAsCol(int i);
   Matrix extractCol(int j);
   void setLine(int i, const vector<double> &v);
   void setLine(int i, const Matrix &v);
-    
+  
+  // Algèbre linéaire
+  // Ne marche que pour un vecteur
+  double normSquared();
+  double norm();
 private:
   int nLines;
   int nCols;
@@ -59,3 +65,9 @@ bool operator==(const Matrix &a, const Matrix &b);
 bool operator!=(const Matrix &a, const Matrix &b);
 // "pretty" output
 ostream& operator<< (ostream& os, const Matrix &value);
+
+
+// Algèbre linéaire
+// On utilise la méthode du gradient conjugué pour résoudre le system
+Matrix solveSystemSDP(const Matrix &a, const Matrix &b, const Matrix &x0,
+		      double epsilon = 0.001);

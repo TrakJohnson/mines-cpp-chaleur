@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <tuple>
 #include <vector>
+#include <cmath>
+#include <cassert>
 
 using namespace std;
 
@@ -39,6 +41,17 @@ Matrix::Matrix(const vector<vector<double>> &vIn) {
     for (int j = 0; j < nCols; j++) {
       this->set(i, j, vIn.at(i).at(j));
     }
+  }
+}
+
+Matrix::Matrix(const vector<double> &vIn) {
+  this->nLines = vIn.size();
+  this->nCols = 1;
+
+  vector<double> base(this->nLines * this->nCols, 0);
+  this->content = base;
+  for (int i = 0; i < nLines; i++) {
+    this->set(i, 0, vIn.at(i));
   }
 }
 
@@ -84,7 +97,7 @@ void Matrix::set(int i, int j, double val) {
   this->content[i * this->nCols + j] = val;
 }
 
-Matrix Matrix::transpose() {
+Matrix Matrix::transpose() const {
   return Matrix([this](int i, int j) -> double { return this->get(j, i); }, this->nCols, this->nLines);
 }
 
@@ -106,6 +119,22 @@ void Matrix::setLine(int i, const vector<double> &v) {
   }
 }
 
+// TODO: pourtuoi utiliser *this ??
+double Matrix::normSquared() {
+  if (this->nCols == 1) {
+    // Ce calcul donne une matrice 1x1, d'où le "(0)"
+    return (this->transpose() * *this)(0);
+  } else if (this->nLines == 1) {
+    return (*this * this->transpose())(0);
+  } else {
+    throw logic_error("Matrix::norm only implemented for vectors");
+  }
+}
+
+double Matrix::norm() {
+  return sqrt(this->normSquared());
+}
+
 // TODO: template this
 void Matrix::setLine(int i, const Matrix &v) {
   for (int j = 0; j < this->nCols; j++) {
@@ -115,8 +144,12 @@ void Matrix::setLine(int i, const Matrix &v) {
 
 Matrix operator+(Matrix a, const Matrix &b) {
   // On fait *une copie de a*
-  if (a.shape() != b.shape()) {
-    throw runtime_error("Incompatible matrix shapes (addition)");
+  auto [xa, ya] = a.shape();
+  auto [xb, yb] = b.shape();
+  if (xa != xb || ya != yb) {
+    // TODO: create a custom exception for matrix incompatibiliy
+    // cout << a << endl << b << endl;
+    throw runtime_error("Incompatible matrix shapes (addition): (" + to_string(xa) + "," +  to_string(ya) + ") and (" + to_string(xb) + "," + to_string(yb) + ")");
   }
 
   auto [nLines, nCols] = a.shape();
@@ -135,8 +168,11 @@ Matrix operator-(const Matrix &a, const Matrix &b) {
 
 Matrix operator*(const Matrix &a, const Matrix &b) {
   // TODO: learn how to make a copy
-  if (a.shape().second != b.shape().first) {
-    throw runtime_error("Incompatible matrix shapes (multiplication)");
+  auto [xa, ya] = a.shape();
+  auto [xb, yb] = b.shape();
+  if (ya != xb) {
+    string s = "Incompatible matrix shapes (multiplication): (" + to_string(xa) + "," +  to_string(ya) + ") and (" + to_string(xb) + "," + to_string(yb) + ")";
+    throw runtime_error(s);
   }
 
   Matrix result(0, a.shape().first, b.shape().second);
@@ -196,4 +232,32 @@ ostream &operator<<(ostream &os, const Matrix &m) {
     }
   }
   return os;
+}
+
+Matrix solveSystemSDP(const Matrix &a, const Matrix &b, const Matrix &x0, double epsilon) {
+  // TODO Les détails sur le choix de méthode de résolution du système sont dans le README
+  // TODO verifier que a est S_n^{++}
+  if (a.transpose() != a) {
+    // cout << a << endl;
+    // throw invalid_argument("Matrix A must be symmetric to use conjugate gradient. Use another solving method for non-symmetric matrices.");
+  }
+  Matrix r{b - a * x0};
+  Matrix p{r};
+  Matrix x{x0};
+  Matrix rNew{x};
+  double alpha{0.};
+  double beta{0.};
+  while (r.norm() >= epsilon) {
+    alpha = r.normSquared() / (p.transpose() * a * p)(0);
+    x = x + alpha * p;
+    rNew = r - alpha * a * p;
+    beta = rNew.normSquared() / r.normSquared();
+    p = rNew + beta * p;
+    r = rNew;
+    // cout << r.norm() << endl;
+  }
+  // cout << "-- compare --" << endl;
+  // cout << a*x << endl;
+  // cout << b << endl;
+  return x;
 }
