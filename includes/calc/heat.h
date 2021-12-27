@@ -24,6 +24,7 @@ class HeatSystem1D {
   double deltaX;
   // Chaque ligne i de la matrice résultante est l'état du système à t_i
   Matrix solve_explicit();
+  Matrix solve_implicit();
  private:
   // paramètres système
   function<double(double)> dFunc;

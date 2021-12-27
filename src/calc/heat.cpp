@@ -71,15 +71,37 @@ Matrix HeatSystem1D::generateKMatrix() {
 }
 
 Matrix HeatSystem1D::solve_explicit() {
+  // Conditions initiales
   Matrix initial{this->spaceDiscretize(timeZeroTemp)};
   if (this->boundaryConditions) {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
   }
+  
   ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
-  auto df = [k, this](Matrix x) -> Matrix {
-    return 1/(this->deltaX) * k * x;
+  
+  // d/dt T = 1/deltaX^2 * K * T
+  // TODO: make everything linear (don't take df as argument but the matrix instead)
+  auto df = [k, this](Matrix temp) -> Matrix {
+    return 1/(pow(this->deltaX, 2)) * k * temp;
   };
   return solver.solve_euler_explicit(df);
+}
+
+Matrix HeatSystem1D::solve_implicit()  {
+  // TODO avoid code duplication from HeatSystem1D::solve_implicit
+  // Conditions initiales
+  Matrix initial{this->spaceDiscretize(timeZeroTemp)};
+  if (this->boundaryConditions) {
+    initial.set(0, 0, this->boundaryCondition0);
+    initial.set(this->nx - 1, 0, this->boundaryConditionN);
+  }
+  
+  ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
+  Matrix k{this->generateKMatrix()};
+  
+  // d/dt T = 1/deltaX^2 * K * T = m * T
+  // TODO: make everything linear (don't take df as argument but the matrix instead)
+  return solver.solve_euler_implicit_linear(1/(pow(this->deltaX, 2)) * k);  
 }
