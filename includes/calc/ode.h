@@ -11,7 +11,9 @@ class ODESolver {
   // Euler explicite: x_i+1 = x_i + dt * df(x_i)
   Matrix solve_euler_explicit(function<Matrix(Matrix)> df);
   // Euler implicite: x_i+1 = x_i + dt * df(x_i+1)
-  Matrix solve_euler_implicit(function<Matrix(Matrix)> df);
+  // Dans notre cas, x -> df(x) est linéaire en x
+  // donc on passe en argument la matrice représentant df
+  Matrix solve_euler_implicit_linear(const Matrix &m);
  private:
   // paramètres temps
   double time0;
