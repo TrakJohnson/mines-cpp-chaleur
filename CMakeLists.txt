@@ -1,9 +1,9 @@
-## References
+## Références
 # https://cliutils.gitlab.io/modern-cmake/
 # https://github.com/ue12-p21/cpp-starter/blob/master/CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.10)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # compile_commands.json pour clangd
 project(mines-cpp-chaleur
 	VERSION 1.0
 	LANGUAGES CXX)
@@ -11,16 +11,16 @@ project(mines-cpp-chaleur
 # compiler preferences (version, flags, etc.)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler.cmake)
 
+# to use gdb
+# set(CMAKE_BUILD_TYPE Debug)
+
 # Main project
 include_directories(${PROJECT_SOURCE_DIR}/includes)
 
-# subdir is deprecated !!
-# subdirs(src)
+# subdir is deprecated..
 add_subdirectory(src)
 
-# Tests
-# message("${BUILD_TESTING}")
-# How is BUILD_TESTING configured ???
+# TODO build les tests que si l'utilisateur le demande
 # if(${BUILD_TESTING})
 # include(${PROJECT_SOURCE_DIR}/cmake/doctest.cmake)
 subdirs(tests)
