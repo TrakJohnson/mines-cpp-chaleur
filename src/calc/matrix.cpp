@@ -94,6 +94,9 @@ double Matrix::operator()(int i) const {
 }
 
 void Matrix::set(int i, int j, double val) {
+  if (i >= this->nLines || j >= this->nCols) {
+    throw runtime_error("Invalid access: index (" + to_string(i) + "," +  to_string(j) + ") on shape (" + to_string(this->nLines) + "," + to_string(this->nCols) + ")");
+  }
   this->content[i * this->nCols + j] = val;
 }
 
@@ -102,7 +105,7 @@ Matrix Matrix::transpose() const {
 }
 
 Matrix Matrix::extractLine(int i) {
-  return Matrix([this, i](int dummy, int j) -> double { return this->get(i, j); }, 1, this->shape().second);
+  return Matrix([this, i]([[maybe_unused]] int dummy, int j) -> double { return this->get(i, j); }, 1, this->shape().second);
 }
 
 Matrix Matrix::extractLineAsCol(int i) {
@@ -110,7 +113,7 @@ Matrix Matrix::extractLineAsCol(int i) {
 }
 
 Matrix Matrix::extractCol(int j) {
-  return Matrix([this, j](int i, int dummy) -> double { return this->get(i, j); }, this->shape().first, 1);
+  return Matrix([this, j](int i, [[maybe_unused]] int d) -> double { return this->get(i, j); }, this->shape().first, 1);
 }
 
 void Matrix::setLine(int i, const vector<double> &v) {
@@ -119,7 +122,7 @@ void Matrix::setLine(int i, const vector<double> &v) {
   }
 }
 
-// TODO: pourtuoi utiliser *this ??
+// TODO: pourquoi utiliser *this ??
 double Matrix::normSquared() {
   if (this->nCols == 1) {
     // Ce calcul donne une matrice 1x1, d'où le "(0)"
@@ -234,13 +237,20 @@ ostream &operator<<(ostream &os, const Matrix &m) {
   return os;
 }
 
-Matrix solveSystemSDP(const Matrix &a, const Matrix &b, const Matrix &x0, double epsilon) {
-  // TODO Les détails sur le choix de méthode de résolution du système sont dans le README
-  // TODO verifier que a est S_n^{++}
-  if (a.transpose() != a) {
-    // cout << a << endl;
-    // throw invalid_argument("Matrix A must be symmetric to use conjugate gradient. Use another solving method for non-symmetric matrices.");
+Matrix solveSystemCG(const Matrix &_a, const Matrix &_b, const Matrix &x0, double epsilon) {
+  // TODO Les détails sur le choix de méthode de résolution du système
+  // et petites manoeuvres effectuées ici sont dans le README
+  Matrix a(0., 0, 0);
+  Matrix b(0., 0, 0);
+  // TODO FIXME the && false is temp !! TODO FIXME
+  if (_a.transpose() != _a) {
+    a = _a.transpose() * _a;
+    b = _a.transpose() * _b;
+  } else {
+    a = _a;
+    b = _b;
   }
+  // Algorithme du gradient conjugué
   Matrix r{b - a * x0};
   Matrix p{r};
   Matrix x{x0};
@@ -254,10 +264,34 @@ Matrix solveSystemSDP(const Matrix &a, const Matrix &b, const Matrix &x0, double
     beta = rNew.normSquared() / r.normSquared();
     p = rNew + beta * p;
     r = rNew;
-    // cout << r.norm() << endl;
   }
-  // cout << "-- compare --" << endl;
-  // cout << a*x << endl;
-  // cout << b << endl;
   return x;
+}
+
+Matrix solveTridiagonalSystem(const Matrix &a, const Matrix &b) {
+  int _n{a.shape().first};
+  // Les diagonales de gauche à droite
+  // cf. https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+  // Attention, on a adopté une numérotation différente à celle de wikipedia
+  // vecA et vecB sont des vecteurs de taille _n - 1 et non pas _n
+
+  // TODO: create a function constructor for vectors to avoid the [[maybe_unused]]
+  Matrix vecA([a](int i, [[maybe_unused]] int j) -> double { return a(i + 1, i); }, _n - 1, 1);
+  Matrix vecB([a](int i, [[maybe_unused]] int j) -> double { return a(i, i); }, _n, 1);
+  Matrix vecC([a](int i, [[maybe_unused]] int j) -> double { return a(i, i + 1); }, _n - 1, 1);
+  Matrix d{b};
+  Matrix sol(0., _n, 1);
+  double w{0.};
+  // TODO: create set definition for vectors: set(int, double)
+  // and avoid index issues
+  for (int i = 1; i < _n; i++) {
+    w = vecA(i - 1) / vecB(i - 1);
+    vecB.set(i, 0, vecB(i) - w * vecC(i - 1));
+    d.set(i, 0, d(i) - w * d(i - 1));
+  }
+  sol.set(_n - 1, 0, d(_n - 1) / vecB(_n - 1));
+  for (int i = _n - 2; i >= 0; i--) {
+    sol.set(i, 0, (d(i) - vecC(i) * sol(i + 1)) / vecB(i));
+  }
+  return sol;
 }
