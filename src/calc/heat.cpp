@@ -9,8 +9,9 @@ HeatSystem1D::HeatSystem1D(function<double(double)> _dFunc,
                            double _x0, double _xN, double _deltaX,
                            bool _boundaryConditions, double _boundaryCondition0,
                            double _boundaryConditionN)
-    : dFunc(_dFunc), time0(_time0), timeN(_timeN), deltaTime(_deltaTime),
-      x0(_x0), xN(_xN), deltaX(_deltaX), timeZeroTemp(_timeZeroTemp),
+    : time0(_time0), timeN(_timeN), deltaTime(_deltaTime),
+      x0(_x0), xN(_xN), deltaX(_deltaX),
+      dFunc(_dFunc), timeZeroTemp(_timeZeroTemp),
       boundaryConditions(_boundaryConditions),
       boundaryCondition0(_boundaryCondition0),
       boundaryConditionN(_boundaryConditionN) {
@@ -48,13 +49,14 @@ Matrix HeatSystem1D::generateKMatrix() {
         |  0  0  0  1 |
 
   */
+
   return Matrix(
       [dVector, this](unsigned int i, unsigned int j) -> double {
         // conditions aux limites
         if (this->boundaryConditions) {
-	  if (i == 0 || i == this->nx - 1) {
-	    return static_cast<double>(i == j);
-	  }
+          if (i == 0 || i == this->nx - 1) {
+            return static_cast<double>(i == j);
+          }
         }
         // tridiagonale
         if (j == i - 1) {
@@ -77,19 +79,20 @@ Matrix HeatSystem1D::solve_explicit() {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
   }
-  
+
   ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
-  
+
   // d/dt T = 1/deltaX^2 * K * T
-  // TODO: make everything linear (don't take df as argument but the matrix instead)
+  // TODO: make everything linear (don't take df as argument but the matrix
+  // instead)
   auto df = [k, this](Matrix temp) -> Matrix {
-    return 1/(pow(this->deltaX, 2)) * k * temp;
+    return 1 / (pow(this->deltaX, 2)) * k * temp;
   };
   return solver.solve_euler_explicit(df);
 }
 
-Matrix HeatSystem1D::solve_implicit()  {
+Matrix HeatSystem1D::solve_implicit() {
   // TODO avoid code duplication from HeatSystem1D::solve_implicit
   // Conditions initiales
   Matrix initial{this->spaceDiscretize(timeZeroTemp)};
@@ -97,11 +100,12 @@ Matrix HeatSystem1D::solve_implicit()  {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
   }
-  
+
   ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
-  
+  // cout << k << endl;
   // d/dt T = 1/deltaX^2 * K * T = m * T
-  // TODO: make everything linear (don't take df as argument but the matrix instead)
-  return solver.solve_euler_implicit_linear(1/(pow(this->deltaX, 2)) * k);  
+  // TODO: make everything linear (don't take df as argument but the matrix
+  // instead)
+  return solver.solve_euler_implicit_linear(1 / (pow(this->deltaX, 2)) * k);
 }

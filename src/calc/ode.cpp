@@ -41,6 +41,7 @@ Matrix ODESolver::solve_euler_explicit(function<Matrix(Matrix)> df) {
 Matrix ODESolver::solve_euler_implicit_linear(const Matrix &m) {
   return solve([m](Matrix x, double dt) -> Matrix {
     int _n{m.shape().first};
-    return solveSystemSDP(Matrix::identity(_n) - dt * m, x, Matrix(0., _n, 1));
+    // return solveSystem(Matrix::identity(_n) - dt * m, x, Matrix(0., _n, 1));
+    return solveTridiagonalSystem(Matrix::identity(_n) - dt * m, x);
   });
 }
