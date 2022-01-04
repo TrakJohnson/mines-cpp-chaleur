@@ -14,10 +14,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/compiler.cmake)
 # to use gdb
 # set(CMAKE_BUILD_TYPE Debug)
 
-# Main project
-include_directories(${PROJECT_SOURCE_DIR}/includes)
+# Libraries externes
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 
-# subdir is deprecated..
+include_directories(${PROJECT_SOURCE_DIR}/includes)
 add_subdirectory(src)
 
 # TODO build les tests que si l'utilisateur le demande
