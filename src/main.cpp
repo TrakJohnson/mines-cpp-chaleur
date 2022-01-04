@@ -21,6 +21,7 @@ double xN{1.};
 //                 s'il est vide, on n'enregistre pas les résultats
 // @param dt delta temps (résolution)
 // @param dx delta position (discrétisation du problème)
+// @param useImplicit choix de la méthode d'Euler (vrai pour méthode implicite)
 void question(function<double(double)> dFunc, string filename, double dt, double dx, bool useImplicit) {
   HeatSystem1D sys(dFunc,
 		   [](double x) -> double {
@@ -42,11 +43,12 @@ void question(function<double(double)> dFunc, string filename, double dt, double
 }
 
 // Chronomètre la réponse à une question
+// @return le temps (en ms) mis pour la résolution, sur une moyenne de 10 exécutions
 double timeQuestion(function<double(double)> dFunc, double dt, double dx, bool useImplicit) {
   auto start = chrono::steady_clock::now();
   // On répète 10 fois pour avoir un temps moyen
   for (int i = 0; i < 10; i++) {
-    question(dFunc, "", dt, dx, useImplicit);
+    question(dFunc, "perf/" + to_string(time(NULL)) + ".txt", dt, dx, useImplicit);
   }
   auto end = chrono::steady_clock::now();
   return (chrono::duration_cast<std::chrono::milliseconds>(end - start)).count() / 10.;

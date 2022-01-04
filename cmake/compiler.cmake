@@ -26,4 +26,7 @@ AddCXXFlag("Wpedantic" TRUE) # warn if non-standard C++ is used
 AddCXXFlag("Wfatal-errors" TRUE) # stop at first error 
 AddCXXFlag("Wshadow" TRUE) # warn the user if a variable declaration shadows one from a parent context
 AddCXXFlag("Wold-style-cast" TRUE) # warn for c-style casts
-AddCXXFlag("Wunused" TRUE) 
+AddCXXFlag("Wunused" TRUE)
+
+# pour clangd (lsp server)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 

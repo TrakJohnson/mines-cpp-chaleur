@@ -13,7 +13,7 @@ cmake --build .
 Dans la racine du projet:
 
 ```bash
-python3 graph.py build/euler_explicite
+python3 graph.py build/euler_explicite.txt
 ```
 
 **TODO insérer le graphique**
@@ -69,9 +69,10 @@ Euler implicite: 9733.9 ms
 
 ## Pratiques
 
-- Le code (noms de variables, classes, fichiers) sont en anglais. Les commentaires sont en français.
+- Le code (noms de variables, classes, fichiers) est en anglais. Les commentaires sont en français.
 - La documentation pour une fonction est au dessus des déclarations dans les fichiers `.h`, ou s'ils n'existent pas dans le `.cpp` directement.
-- L'indexation des matrices commence à 0
+- L'indexation des matrices commence à 0.
+- La librairie externe utilisée (Eigen 3.4.0) est intégralement incluse dans le projet. C'est la méthode la plus simple mais si on suppose que l'utilisateur l'avait déjà (dans /usr/include ou /usr/local/include ou équivalent) on pourrait s'en passer.
 
 ## Théoriques
 
