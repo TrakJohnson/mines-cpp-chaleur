@@ -5,6 +5,8 @@
 
 using namespace std;
 
+using Matrix = DenseMatrix;
+
 TEST_CASE("initialize solver") {
   Matrix v1(vector<vector<double>> {{1.}});
   ODESolver solver(0., 1., 0.1, v1);

@@ -3,15 +3,16 @@
 #include "calc/ode.h"
 #include <cmath>
 
-HeatSystem1D::HeatSystem1D(function<double(double)> _dFunc,
-                           function<double(double)> _timeZeroTemp,
-                           double _time0, double _timeN, double _deltaTime,
-                           double _x0, double _xN, double _deltaX,
-                           bool _boundaryConditions, double _boundaryCondition0,
-                           double _boundaryConditionN)
-    : time0(_time0), timeN(_timeN), deltaTime(_deltaTime),
-      x0(_x0), xN(_xN), deltaX(_deltaX),
-      dFunc(_dFunc), timeZeroTemp(_timeZeroTemp),
+template <class Matrix>
+HeatSystem1D<Matrix>::HeatSystem1D(function<double(double)> _dFunc,
+                                   function<double(double)> _timeZeroTemp,
+                                   double _time0, double _timeN,
+                                   double _deltaTime, double _x0, double _xN,
+                                   double _deltaX, bool _boundaryConditions,
+                                   double _boundaryCondition0,
+                                   double _boundaryConditionN)
+    : time0(_time0), timeN(_timeN), deltaTime(_deltaTime), x0(_x0), xN(_xN),
+      deltaX(_deltaX), dFunc(_dFunc), timeZeroTemp(_timeZeroTemp),
       boundaryConditions(_boundaryConditions),
       boundaryCondition0(_boundaryCondition0),
       boundaryConditionN(_boundaryConditionN) {
@@ -21,7 +22,9 @@ HeatSystem1D::HeatSystem1D(function<double(double)> _dFunc,
 
 // Ref:
 // https://stackoverflow.com/questions/332030/when-should-static-cast-dynamic-cast-const-cast-and-reinterpret-cast-be-used
-Matrix HeatSystem1D::spaceDiscretize(function<double(double)> f) {
+
+template <class Matrix>
+Matrix HeatSystem1D<Matrix>::spaceDiscretize(function<double(double)> f) {
   return Matrix(
       [f, this](int i, [[maybe_unused]] int j) -> double {
         return f(static_cast<double>(i) / this->nx);
@@ -29,7 +32,7 @@ Matrix HeatSystem1D::spaceDiscretize(function<double(double)> f) {
       this->nx, 1);
 }
 
-Matrix HeatSystem1D::generateKMatrix() {
+template <class Matrix> Matrix HeatSystem1D<Matrix>::generateKMatrix() {
   Matrix dVector = this->spaceDiscretize(this->dFunc);
   /*
 
@@ -72,7 +75,7 @@ Matrix HeatSystem1D::generateKMatrix() {
       this->nx, this->nx);
 }
 
-Matrix HeatSystem1D::solve_explicit() {
+template <class Matrix> Matrix HeatSystem1D<Matrix>::solve_explicit() {
   // Conditions initiales
   Matrix initial{this->spaceDiscretize(timeZeroTemp)};
   if (this->boundaryConditions) {
@@ -92,7 +95,7 @@ Matrix HeatSystem1D::solve_explicit() {
   return solver.solve_euler_explicit(df);
 }
 
-Matrix HeatSystem1D::solve_implicit() {
+template <class Matrix> Matrix HeatSystem1D<Matrix>::solve_implicit() {
   // TODO avoid code duplication from HeatSystem1D::solve_implicit
   // Conditions initiales
   Matrix initial{this->spaceDiscretize(timeZeroTemp)};
@@ -109,3 +112,7 @@ Matrix HeatSystem1D::solve_implicit() {
   // instead)
   return solver.solve_euler_implicit_linear(1 / (pow(this->deltaX, 2)) * k);
 }
+
+// Nécessaire à cause des templates
+template class HeatSystem1D<DenseMatrix>;
+//template class HeatSystem1D<SparseMatrix>;

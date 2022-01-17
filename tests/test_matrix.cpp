@@ -1,12 +1,23 @@
 #include "calc/matrix.h"
+#include "calc/solve.h"
 #include "doctest.h"
 #include <iostream>
-#include <vector>
 #include <time.h>
+#include <vector>
+
+// #define SPARSE false
 
 using namespace std;
 
+using Matrix = SparseMatrix;
+
 TEST_CASE("initialize matrix") {
+  if (SPARSE) {
+    cout << "TESTS: using sparse matrix" << endl;
+  } else {
+    cout << "TESTS: using dense matrix" << endl;
+  }
+  // }
   vector<vector<double>> vIn{{0.5, 0.5}, {0.5, 0.5}};
   Matrix m1(vIn);
   Matrix m2(0.5, 2);
@@ -20,7 +31,7 @@ TEST_CASE("initialize matrix") {
 
   Matrix v1{{0., 1., 2.}};
   Matrix v2{v1.transpose()};
-  CHECK(v1(1) == v2(1));
+  CHECK(v1(0) == v2(0));
 }
 
 TEST_CASE("matrix algebra") {
@@ -63,11 +74,6 @@ TEST_CASE("matrix algebra") {
 }
 
 TEST_CASE("matrix methods") {
-  SUBCASE("extraction") {
-    CHECK(Matrix::identity(3).extractCol(1) ==
-          Matrix::identity(3).extractLineAsCol(1));
-    CHECK(Matrix::identity(3).transpose() == Matrix::identity(3));
-  }
   SUBCASE("transposition") {
     Matrix m1({{0., -1.}, {1., 0.}});
     CHECK(m1.transpose() == (-1) * m1);
@@ -90,11 +96,13 @@ TEST_CASE("solver") {
 
     auto randMatrix = [](int l, int c) -> Matrix {
       srand(time(NULL));
-      return Matrix([]([[maybe_unused]] int i, [[maybe_unused]] int j) -> double {
-	return rand() % 100 - 50;
-      }, l, c);
+      return Matrix(
+          []([[maybe_unused]] int i, [[maybe_unused]] int j) -> double {
+            return rand() % 100 - 50;
+          },
+          l, c);
     };
-    
+
     double epsilon = 0.001;
     Matrix sol1 = solveSystemCG(m1, b1, x01, epsilon);
     Matrix sol2 = solveSystemCG(m2, b1, x01, epsilon);

@@ -15,6 +15,9 @@ double tN{.5};
 double x0{0.};
 double xN{1.};
 
+// Choix entre matrices creuses et denses
+using MatrixType = DenseMatrix;
+
 // Permet de répondre aux questions
 // @param dFunc est la fonction x -> D(x)
 // @param filename le nom du fichier où les résultats sont stockés
@@ -23,7 +26,7 @@ double xN{1.};
 // @param dx delta position (discrétisation du problème)
 // @param useImplicit choix de la méthode d'Euler (vrai pour méthode implicite)
 void question(function<double(double)> dFunc, string filename, double dt, double dx, bool useImplicit) {
-  HeatSystem1D sys(dFunc,
+  HeatSystem1D<MatrixType> sys(dFunc,
 		   [](double x) -> double {
 		     return 0.5 + sin(2 * M_PI * x) - 0.5 * cos(2 * M_PI * x);
 		   },
@@ -31,7 +34,7 @@ void question(function<double(double)> dFunc, string filename, double dt, double
 		   t0, tN, dt,  
 		   x0, xN, dx,
 		   true, 0., 0.);  // conditions au bord
-  Matrix r(0., 0);
+  MatrixType r(0., 0);
   if (!useImplicit) {
     r = sys.solve_explicit();
   } else {

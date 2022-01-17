@@ -5,15 +5,16 @@
 
 using namespace std;
 
+template <class Matrix>
 class HeatSystem1D {
  public:
-  HeatSystem1D(function<double(double)> dFunc,
-	       function<double(double)> timeZeroTemp,
-	       double time0, double timeN, double deltaTime,
-	       double x0, double xN, double deltaX,
-	       bool boundaryConditions = false,
-	       double boundaryCondition0 = 0.,
-	       double boundaryConditionN = 0.);
+  HeatSystem1D<Matrix>(function<double(double)> dFunc,
+		       function<double(double)> timeZeroTemp,
+		       double time0, double timeN, double deltaTime,
+		       double x0, double xN, double deltaX,
+		       bool boundaryConditions = false,
+		       double boundaryCondition0 = 0.,
+		       double boundaryConditionN = 0.);
   // paramètres de résolution
   // publics car besoin dans utils/file.cpp
   double time0;

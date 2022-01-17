@@ -5,6 +5,7 @@
 // TODO use ref for function or not jsplus ?
 // TODO where do I put the docs ? header files or implementation ?
 
+template <class Matrix>
 class ODESolver {
  public:
   ODESolver(double time0, double timeN, double deltaT, const Matrix &initialX);

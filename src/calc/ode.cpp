@@ -1,13 +1,15 @@
 #include "calc/ode.h"
 #include "calc/matrix.h"
+#include "calc/solve.h"
 #include <functional>
 #include <string>
 
-ODESolver::ODESolver(double _time0, double _timeN, double _deltaT,
-                     const Matrix &_initialX)
-    : initialX(_initialX) { // Matrix n'a pas de constructeur par défaut on on
+template <class Matrix>
+ODESolver<Matrix>::ODESolver(double _time0, double _timeN, double _deltaT,
+                             const Matrix &_initialX)
+    : initialX(_initialX) { // Matrix n'a pas de constructeur par défaut pq on
                             // doit mettre ça là ? TODO
-  // Utiliser les listes d'initialisation lorsque:
+  // NOTE pour moi: Utiliser les listes d'initialisation lorsque:
   // - pas de constructeur défaut
   // - référence
   // - const
@@ -18,8 +20,8 @@ ODESolver::ODESolver(double _time0, double _timeN, double _deltaT,
   this->n = (timeN - time0) / deltaT;
 }
 
-// TODO replace string with template ?
-Matrix ODESolver::solve(function<Matrix(Matrix, double)> f) {
+template <class Matrix>
+Matrix ODESolver<Matrix>::solve(function<Matrix(Matrix, double)> f) {
   int dim{
       this->initialX.shape().first}; // dimension de l'ev dans lequel on résout
   Matrix results(0., this->n,
@@ -34,14 +36,19 @@ Matrix ODESolver::solve(function<Matrix(Matrix, double)> f) {
   return results;
 }
 
-Matrix ODESolver::solve_euler_explicit(function<Matrix(Matrix)> df) {
+template <class Matrix>
+Matrix ODESolver<Matrix>::solve_euler_explicit(function<Matrix(Matrix)> df) {
   return solve([df](Matrix x, double dt) -> Matrix { return x + dt * df(x); });
 }
 
-Matrix ODESolver::solve_euler_implicit_linear(const Matrix &m) {
+template <class Matrix>
+Matrix ODESolver<Matrix>::solve_euler_implicit_linear(const Matrix &m) {
   return solve([m](Matrix x, double dt) -> Matrix {
     int _n{m.shape().first};
-    // return solveSystem(Matrix::identity(_n) - dt * m, x, Matrix(0., _n, 1));
-    return solveTridiagonalSystem(Matrix::identity(_n) - dt * m, x);
+    // On utilise le solver tridiagonal
+    return solveTridiagonalSystem(m.identity(_n) - dt * m, x);
   });
 }
+
+template class ODESolver<DenseMatrix>;
+// template class ODESolver<SparseMatrix>;
