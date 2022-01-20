@@ -1,12 +1,16 @@
 #pragma once
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#include "eigen-3.4.0/Eigen/Core"
+#include "eigen-3.4.0/Eigen/SparseCore"
+#pragma GCC diagnostic pop
+
 #include <functional>
 #include <iostream>
 #include <tuple>
-#include <vector>
 #include <variant>
-#include "eigen-3.4.0/Eigen/Core"
-#include "eigen-3.4.0/Eigen/SparseCore"
+#include <vector>
 
 using namespace std;
 
@@ -39,7 +43,8 @@ public:
   // Attention à vérifier que f est au moins définie sur le produit cartésien
   // d'intervalles entiers
   // [| 0; nLines - 1 |] * [| 0; nCols - 1 |]
-  DenseMatrix(function<double(int i, int j)> f, const int &nLines, const int &nCols);
+  DenseMatrix(function<double(int i, int j)> f, const int &nLines,
+              const int &nCols);
 
   // Renvoie la matrice identité de taile n
   static DenseMatrix identity(int n);
@@ -55,22 +60,19 @@ public:
   double operator()(int i) const;
   // Modification d'une cellule
   void set(int i, int j, double value);
-  // TODO: OK THIS WORKS BUT WHY ?
   DenseMatrix &operator=(const DenseMatrix &m) = default;
 
   // Renvoie la matrice transposée
   DenseMatrix transpose() const;
-  // Ces fonctions vont probablement à la poubelle
-  // TODO: these functions might induce a lot of copies?
+  
   void setLine(int i, const vector<double> &v);
   void setLine(int i, const DenseMatrix &v);
 
   // Renvoie la norme au carré d'un vecteur (ligne ou colonne)
   // Si l'objet n'est pas un vecteur, lève une logic_error
-  // TODO: quel type d'exceptions utiliser ?
   double normSquared();
   double norm();
-    
+
 private:
   int nLines;
   int nCols;
@@ -79,9 +81,8 @@ private:
     return this->content.at(this->nCols * line + col);
   }
   void display() const;
-  
 };
-
+    
 DenseMatrix operator+(DenseMatrix a, const DenseMatrix &b);
 DenseMatrix operator-(const DenseMatrix &a, const DenseMatrix &b);
 // Multiplication matricielle
@@ -94,8 +95,6 @@ bool operator!=(const DenseMatrix &a, const DenseMatrix &b);
 // Affichage de la matrice
 ostream &operator<<(ostream &os, const DenseMatrix &value);
 
-
-
 // -- Sparse matrix
 typedef Eigen::SparseMatrix<double> EigenSparse;
 
@@ -107,14 +106,16 @@ public:
   SparseMatrix(const double &x, const int &nLinesCols);
   SparseMatrix(const vector<vector<double>> &vIn);
   SparseMatrix(const vector<double> &vIn);
-  SparseMatrix(function<double(int i, int j)> f, const int &nLines, const int &nCols);
+  SparseMatrix(function<double(int i, int j)> f, const int &nLines,
+               const int &nCols);
   static SparseMatrix identity(int n);
   pair<int, int> shape() const;
   double operator()(int i, int j) const;
   double operator()(int i) const;
   void set(int i, int j, double value);
   SparseMatrix &operator=(const SparseMatrix &m) = default;
-
+  friend DenseMatrix operator*(SparseMatrix m, const DenseMatrix &v);
+  
   SparseMatrix transpose() const;
 
   // nécessaire ???
@@ -126,7 +127,7 @@ public:
 
   double normSquared();
   double norm();
-    
+
 private:
   EigenSparse content;
   void display() const;
@@ -145,23 +146,3 @@ bool operator==(const SparseMatrix &a, const SparseMatrix &b);
 bool operator!=(const SparseMatrix &a, const SparseMatrix &b);
 // Affichage de la matrice
 ostream &operator<<(ostream &os, const SparseMatrix &value);
-
-// -- Méthodes de résolution de système
-//
-//   Ax = b    (1)
-//
-// Méthode du gradient conjugué (CG = conjugate gradient)
-// @param a la matrice A de (1)
-//          elle doit être, en théorie, symétrique définie positive
-// @param b le vecteur b de (1)
-// @param x0 le point de départ de l'algorithme, doit être aussi proche
-//           que possible de la solution finale
-template<class Matrix>
-Matrix solveSystemCG(const Matrix &a, const Matrix &b, const Matrix &x0,
-                     double epsilon = 0.001);
-// Algorithme de Thomas pour les systèmes tridiagonaux
-// @param a la matrice A de (1)
-//          elle doit être tridiagonale
-// @param b le vecteur b de (1)
-template<class Matrix>
-Matrix solveTridiagonalSystem(const Matrix &a, const Matrix &b);

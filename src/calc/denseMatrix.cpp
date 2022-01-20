@@ -113,11 +113,10 @@ void DenseMatrix::setLine(int i, const vector<double> &v) {
 
 void DenseMatrix::setLine(int i, const DenseMatrix &v) {
   for (int j = 0; j < this->nCols; j++) {
-    this->set(i, j, v(0, j));
+    this->set(i, j, v(j, 0));
   }
 }
 
-// TODO: pourquoi utiliser *this ??
 double DenseMatrix::normSquared() {
   if (this->nCols == 1) {
     // Ce calcul donne une matrice 1x1, d'où le "(0)"

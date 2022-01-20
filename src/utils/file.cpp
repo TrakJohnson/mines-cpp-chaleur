@@ -4,7 +4,7 @@
 #include "calc/heat.h"
 
 template <class Matrix>
-void writeMatrixToFile(const Matrix &m, HeatSystem1D<Matrix> sys, string fileName) {
+void writeMatrixToFile(const DenseMatrix &m, HeatSystem1D<Matrix> sys, string fileName) {
   ofstream f;
   f.open(fileName);
   f << sys.time0 << " " << sys.timeN << " " << sys.deltaTime << endl;
@@ -15,4 +15,4 @@ void writeMatrixToFile(const Matrix &m, HeatSystem1D<Matrix> sys, string fileNam
 
 template void writeMatrixToFile(const DenseMatrix &m,
                                 HeatSystem1D<DenseMatrix> sys, string fileName);
-//template void writeMatrixToFile(const SparseMatrix &m, HeatSystem1D<SparseMatrix> sys, string fileName);
+template void writeMatrixToFile(const DenseMatrix &m, HeatSystem1D<SparseMatrix> sys, string fileName);

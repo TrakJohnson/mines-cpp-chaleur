@@ -9,7 +9,7 @@ using Matrix = DenseMatrix;
 
 TEST_CASE("initialize solver") {
   Matrix v1(vector<vector<double>> {{1.}});
-  ODESolver solver(0., 1., 0.1, v1);
+  ODESolver<Matrix> solver(0., 1., 0.1, v1);
   // test sur x' = x, x(0) = 1
   Matrix r = solver.solve_euler_explicit([](Matrix x) -> Matrix { return x; });
   Matrix exp_mat = Matrix([](int i, [[maybe_unused]] int j) ->

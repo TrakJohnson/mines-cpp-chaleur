@@ -4,7 +4,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 ### Données exportées par le C++
 FILENAME = sys.argv[1]
 NUMBER_LINES = 100
@@ -25,7 +24,7 @@ m = df.to_numpy()
 
 
 ### Plot des résultats
-fig, ax = plt.subplots(1, 2, figsize=(6, 1),
+fig, ax = plt.subplots(1, 2, figsize=(6, 4),
                        gridspec_kw={'width_ratios': [15, 1]})
 n = len(m)
 cmap = plt.cm.turbo
@@ -37,8 +36,7 @@ norm = mpl.colors.Normalize(vmin=t0, vmax=tN)
 cb1 = mpl.colorbar.ColorbarBase(ax[1], cmap=cmap,
                                 norm=norm,
                                 orientation='vertical')
-cb1.set_label('temps (s)')
-
+cb1.set_label('Temps (s)')
 
 # plot
 if REVERSE:
@@ -47,11 +45,14 @@ if REVERSE:
 for row, c in zip(m, colors):
     ax[0].plot(np.linspace(x0, xN, len(row)), row, c=c)
 
-ax[0].set_xlabel('x')
+ax[0].set_xlabel('X')
 ax[0].set_xlim([x0, xN])
-ax[0].set_ylabel('Température (K)')
-# TODO: ne marche que sur linux :P
+ax[0].set_ylabel('Température')
+
+# ne marche que sur linux
 ax[0].set_title(
     f"{FILENAME.split('/')[-1].split('.')[0].replace('_', ' ')} dt={deltaTime} dx={deltaX}"
 )
+
 plt.show()
+fig.savefig(f"assets/{FILENAME.split('/')[-1].split('.')[0]}")

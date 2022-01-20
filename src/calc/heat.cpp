@@ -16,16 +16,16 @@ HeatSystem1D<Matrix>::HeatSystem1D(function<double(double)> _dFunc,
       boundaryConditions(_boundaryConditions),
       boundaryCondition0(_boundaryCondition0),
       boundaryConditionN(_boundaryConditionN) {
-  this->nt = int(timeN - time0) / deltaTime;
-  this->nx = int(xN - x0) / deltaX;
+  this->nt = int(timeN - time0) / deltaTime + 1;
+  this->nx = int(xN - x0) / deltaX + 1;
 }
 
 // Ref:
 // https://stackoverflow.com/questions/332030/when-should-static-cast-dynamic-cast-const-cast-and-reinterpret-cast-be-used
 
 template <class Matrix>
-Matrix HeatSystem1D<Matrix>::spaceDiscretize(function<double(double)> f) {
-  return Matrix(
+DenseMatrix HeatSystem1D<Matrix>::spaceDiscretize(function<double(double)> f) {
+  return DenseMatrix(
       [f, this](int i, [[maybe_unused]] int j) -> double {
         return f(static_cast<double>(i) / this->nx);
       },
@@ -33,7 +33,7 @@ Matrix HeatSystem1D<Matrix>::spaceDiscretize(function<double(double)> f) {
 }
 
 template <class Matrix> Matrix HeatSystem1D<Matrix>::generateKMatrix() {
-  Matrix dVector = this->spaceDiscretize(this->dFunc);
+  DenseMatrix dVector = this->spaceDiscretize(this->dFunc);
   /*
 
   À vérifier, mais deux modifications que j'ai dû apporter à l'énoncé:
@@ -53,6 +53,7 @@ template <class Matrix> Matrix HeatSystem1D<Matrix>::generateKMatrix() {
 
   */
 
+  // Le seul endroit où on a besoin de SparseMatrix
   return Matrix(
       [dVector, this](unsigned int i, unsigned int j) -> double {
         // conditions aux limites
@@ -75,36 +76,36 @@ template <class Matrix> Matrix HeatSystem1D<Matrix>::generateKMatrix() {
       this->nx, this->nx);
 }
 
-template <class Matrix> Matrix HeatSystem1D<Matrix>::solve_explicit() {
+template <class Matrix> DenseMatrix HeatSystem1D<Matrix>::solve_explicit() {
   // Conditions initiales
-  Matrix initial{this->spaceDiscretize(timeZeroTemp)};
+  DenseMatrix initial{this->spaceDiscretize(timeZeroTemp)};
   if (this->boundaryConditions) {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
   }
 
-  ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
+  ODESolver<Matrix> solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
 
   // d/dt T = 1/deltaX^2 * K * T
   // TODO: make everything linear (don't take df as argument but the matrix
   // instead)
-  auto df = [k, this](Matrix temp) -> Matrix {
+  auto df = [k, this](DenseMatrix temp) -> DenseMatrix {
     return 1 / (pow(this->deltaX, 2)) * k * temp;
   };
   return solver.solve_euler_explicit(df);
 }
 
-template <class Matrix> Matrix HeatSystem1D<Matrix>::solve_implicit() {
+template <class Matrix> DenseMatrix HeatSystem1D<Matrix>::solve_implicit() {
   // TODO avoid code duplication from HeatSystem1D::solve_implicit
   // Conditions initiales
-  Matrix initial{this->spaceDiscretize(timeZeroTemp)};
+  DenseMatrix initial{this->spaceDiscretize(timeZeroTemp)};
   if (this->boundaryConditions) {
     initial.set(0, 0, this->boundaryCondition0);
     initial.set(this->nx - 1, 0, this->boundaryConditionN);
   }
 
-  ODESolver solver(this->time0, this->timeN, this->deltaTime, initial);
+  ODESolver<Matrix> solver(this->time0, this->timeN, this->deltaTime, initial);
   Matrix k{this->generateKMatrix()};
   // cout << k << endl;
   // d/dt T = 1/deltaX^2 * K * T = m * T
@@ -115,4 +116,4 @@ template <class Matrix> Matrix HeatSystem1D<Matrix>::solve_implicit() {
 
 // Nécessaire à cause des templates
 template class HeatSystem1D<DenseMatrix>;
-//template class HeatSystem1D<SparseMatrix>;
+template class HeatSystem1D<SparseMatrix>;

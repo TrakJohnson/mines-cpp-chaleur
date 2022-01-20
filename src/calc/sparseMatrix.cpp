@@ -1,13 +1,20 @@
 #include "calc/matrix.h"
-#include "eigen-3.4.0/Eigen/Core"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#include "eigen-3.4.0/Eigen/Dense"
 #include "eigen-3.4.0/Eigen/SparseCore"
+#pragma GCC diagnostic pop
+
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <typeinfo>
 
 using namespace std;
 typedef Eigen::SparseMatrix<double> EigenSparse;
+// typedef Eigen::Dense
 
 SparseMatrix::SparseMatrix(const SparseMatrix &m) { this->content = m.content; }
 
@@ -112,12 +119,20 @@ void SparseMatrix::setLine(int i, const vector<double> &v) {
   }
 }
 
+void SparseMatrix::setLine(int i, const SparseMatrix &v) {
+  auto [nLines, nCols] = v.shape();
+  if (nCols == 1) {
+    for (int j = 0; j < this->content.cols(); j++) {
+      this->set(i, j, v(j, 0));
+    }
+  } else {
+    throw runtime_error("setLine must be applied to column vector");
+  }
+}
+
 double SparseMatrix::normSquared() { return this->content.squaredNorm(); }
 
 double SparseMatrix::norm() { return this->content.norm(); }
-
-// TODO: template this
-void SparseMatrix::setLine(int i, const SparseMatrix &v) {}
 
 SparseMatrix operator+(SparseMatrix a, const SparseMatrix &b) {
   // On fait *une copie de a*
@@ -168,6 +183,24 @@ SparseMatrix operator*(const SparseMatrix &a, const SparseMatrix &b) {
   }
 
   return result;
+}
+
+
+DenseMatrix operator*(SparseMatrix m, const DenseMatrix &v) {
+  // v est un vecteur colonne
+  auto [a, b] = m.shape();
+  auto [c, d] = v.shape();
+  if (b == c && d == 1) {
+    Eigen::VectorXd eigV(c);
+    for (int i = 0; i < c; i++) {
+      eigV(i) = v(i);
+    }
+    auto prodResult = m.content * eigV;
+    DenseMatrix toReturn([prodResult](int i, int j) -> double { return prodResult(i, j);}, a, d);
+    return toReturn;
+  } else {
+    throw runtime_error("DenseMatrix must be a column vector to multiply with SparseMatrix");
+  }
 }
 
 SparseMatrix operator*(SparseMatrix a, double lambda) {

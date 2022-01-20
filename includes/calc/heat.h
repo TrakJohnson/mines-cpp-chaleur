@@ -24,8 +24,8 @@ class HeatSystem1D {
   double xN;
   double deltaX;
   // Chaque ligne i de la matrice résultante est l'état du système à t_i
-  Matrix solve_explicit();
-  Matrix solve_implicit();
+  DenseMatrix solve_explicit();
+  DenseMatrix solve_implicit();
  private:
   // paramètres système
   function<double(double)> dFunc;
@@ -39,6 +39,6 @@ class HeatSystem1D {
   double boundaryCondition0;
   double boundaryConditionN;
   // utils
-  Matrix spaceDiscretize(function<double(double)> f);
+  DenseMatrix spaceDiscretize(function<double(double)> f);
   Matrix generateKMatrix();
 };

@@ -3,4 +3,5 @@
 #include "calc/heat.h"
 
 template <class Matrix>
-void writeMatrixToFile(const Matrix &m, HeatSystem1D<Matrix> sys, string fileName);
+void writeMatrixToFile(const DenseMatrix &m, HeatSystem1D<Matrix> sys,
+                       string fileName);

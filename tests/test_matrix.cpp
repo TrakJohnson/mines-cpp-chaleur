@@ -1,23 +1,27 @@
 #include "calc/matrix.h"
-#include "calc/solve.h"
+#include "calc/solve.hpp"
 #include "doctest.h"
+#include <chrono>
 #include <iostream>
 #include <time.h>
+#include <typeinfo>
 #include <vector>
-
-// #define SPARSE false
 
 using namespace std;
 
+// Choix du type de matrice pour les tests
+// Ce choix ne s'applique que aux tests d'algèbre
+// pas aux solvers
 using Matrix = SparseMatrix;
 
 TEST_CASE("initialize matrix") {
-  if (SPARSE) {
-    cout << "TESTS: using sparse matrix" << endl;
+  if (is_same<Matrix, SparseMatrix>::value) {
+    cout << "[TESTS] Using sparse matrix - conjugate gradient not implemented."
+         << endl;
   } else {
-    cout << "TESTS: using dense matrix" << endl;
+    cout << "[TESTS] Using dense matrix" << endl;
   }
-  // }
+
   vector<vector<double>> vIn{{0.5, 0.5}, {0.5, 0.5}};
   Matrix m1(vIn);
   Matrix m2(0.5, 2);
@@ -64,6 +68,13 @@ TEST_CASE("matrix algebra") {
       CHECK(2 * m1 == m2);
       CHECK(id3 * 3. == 3. * id3);
     }
+
+    SUBCASE("Sparse product with dense") {
+      SparseMatrix m(2., 2, 2);
+      DenseMatrix v(1., 2, 1);
+      DenseMatrix res(4., 2, 1);
+      CHECK(m * v == res);
+    }
   }
 
   SUBCASE("norm") {
@@ -81,40 +92,44 @@ TEST_CASE("matrix methods") {
   SUBCASE("partial overwrite") {
     Matrix m1{Matrix::identity(3)};
     Matrix m2({{1., 0., 0.}, {4., 4., 2.}, {0., 0., 1.}});
+    vector<double> v{{1., 2., 6.}};
+    Matrix m3(v);
     m1.setLine(1, vector<double>{4., 4., 2.});
-    CHECK(m1 == m2);
+    m2.setLine(2, m3);
+    Matrix m4{{{1., 0., 0.}, {4., 4., 2.}, {0., 0., 1.}}};
+    CHECK(m1 == m4);
   }
 }
 
 TEST_CASE("solver") {
+  double epsilon = 0.001;
   SUBCASE("conjugate gradient method") {
-    // m1 doit être définie positive
-    Matrix m1{{{1., 2., 3.}, {2., 3., 4.}, {3., 4., 5.}}};
-    Matrix m2{m1 + 2. * Matrix::identity(3)};
-    Matrix b1(3., 3, 1);
-    Matrix x01(1., 3, 1);
-
-    auto randMatrix = [](int l, int c) -> Matrix {
+    auto randMatrix = [](int l, int c) -> DenseMatrix {
       srand(time(NULL));
-      return Matrix(
+      return DenseMatrix(
           []([[maybe_unused]] int i, [[maybe_unused]] int j) -> double {
             return rand() % 100 - 50;
           },
           l, c);
     };
 
-    double epsilon = 0.001;
-    Matrix sol1 = solveSystemCG(m1, b1, x01, epsilon);
-    Matrix sol2 = solveSystemCG(m2, b1, x01, epsilon);
+    // m1 doit être définie positive
+    DenseMatrix m1{{{1., 2., 3.}, {2., 3., 4.}, {3., 4., 5.}}};
+    DenseMatrix m2{m1 + 2. * DenseMatrix::identity(3)};
+    DenseMatrix b1(3., 3, 1);
+    DenseMatrix x01(1., 3, 1);
+
+    DenseMatrix sol1 = solveSystemCG(m1, b1, x01, epsilon);
+    DenseMatrix sol2 = solveSystemCG(m2, b1, x01, epsilon);
     // la solution doit être juste à epsilon près
     CHECK((m1 * sol1 - b1).norm() < epsilon);
     CHECK((m2 * sol2 - b1).norm() < epsilon);
 
-    // random checks
+    // le gradient conjugué semble marcher partout
     int n = 5;
-    Matrix m(0., n);
-    Matrix b(0., n, 1);
-    Matrix x0(0., n, 1);
+    DenseMatrix m(0., n);
+    DenseMatrix b(0., n, 1);
+    DenseMatrix x0(0., n, 1);
     for (int i = 0; i < 10; i++) {
       b = randMatrix(n, 1);
       m = randMatrix(n, n);
@@ -123,12 +138,69 @@ TEST_CASE("solver") {
   }
 
   SUBCASE("thomas algorithm") {
-    Matrix m1{{{-2., 7., 0.}, {2., 2., 4.}, {0., 4., 0.}}};
-    Matrix b1(47., 3, 1);
-    Matrix sol = solveTridiagonalSystem(m1, b1);
-    cout << sol << endl;
-    cout << "precision: ";
-    cout << (m1 * sol - b1).norm() << endl;
-    CHECK((m1 * sol - b1).norm() < 0.001);
+    SparseMatrix m1{{{-2., 7., 0.}, {2., 2., 4.}, {0., 4., 0.}}};
+    DenseMatrix b1(47., 3, 1);
+    DenseMatrix sol = solveTridiagonalSystem(m1, b1);
+
+    // cout << sol << endl;
+    // cout << "precision: ";
+    // cout << (m1 * sol - b1).norm() << endl;
+    // CHECK((m1 * sol - b1).norm() < 0.001);
+
+    SparseMatrix m2{{{1., 3., 0.}, {2., 1., 7.}, {0., 4., 1.}}};
+    DenseMatrix b2(2., 3, 1);
+    sol = solveTridiagonalSystem(m2, b2);
+
+    // cout << sol << endl;
+    // cout << "precision: ";
+    // cout << (m2 * sol - b2).norm() << endl;
+    CHECK((m2 * sol - b2).norm() < 0.001);
+  }
+
+  SUBCASE("solver benchmarks") {
+    int n = 50;
+    DenseMatrix b(0., n, 1);
+    DenseMatrix m(0., n);
+    DenseMatrix x0(0., n, 1);
+
+    double triMean{0.};
+    double cgMean{0.};
+    int nTests{10};
+
+    auto randTridiagonalMatrix = [](int l, int c) -> DenseMatrix {
+      srand(time(NULL));
+      return DenseMatrix(
+          [](int i, int j) -> double {
+            if (i == j || i - 1 == j || i + 1 == j) {
+              return rand() % 100 - 50;
+            } else {
+              return 0.;
+            }
+          },
+          l, c);
+    };
+
+    for (int i = 0; i < nTests; i++) {
+      b = randTridiagonalMatrix(n, 1);
+      m = randTridiagonalMatrix(n, n);
+      auto start = chrono::steady_clock::now();
+      CHECK((m * solveSystemCG(m, b, x0, epsilon) - b).norm() < epsilon);
+      auto middle = chrono::steady_clock::now();
+      CHECK((m * solveTridiagonalSystem(m, b) - b).norm() < epsilon);
+      auto end = chrono::steady_clock::now();
+      triMean +=
+          chrono::duration_cast<chrono::microseconds>(end - middle).count() /
+          1000.;
+      cgMean +=
+          chrono::duration_cast<chrono::microseconds>(middle - start).count() /
+          1000.;
+    }
+    cout << "-- Solver performance tests, n = " << n << endl;
+    cout << "Tridiagonal mean: " << (triMean / static_cast<float>(nTests))
+         << " ms" << endl;
+    cout << "Conjugate gradient mean: " << (cgMean / static_cast<float>(nTests))
+         << " ms" << endl;
+    cout << "(we take x0 = (0, 0, ...) for conjugate gradient, not optimal)"
+         << endl;
   }
 }
