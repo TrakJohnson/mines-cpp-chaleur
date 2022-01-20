@@ -16,28 +16,27 @@ Dans la racine du projet:
 python3 graph.py build/euler_explicite.txt
 ```
 
-**TODO insérer le graphique**
+![euler explicite](assets/euler_explicite.png)
 
 ## Question 4
 
 ```bash
 python3 graph.py build/euler_implicite.txt
 ```
-**TODO insérer le graphique**
+![euler implicite](assets/euler_implicite.png)
 
 ## Question Bonus 1
 
 ```bash
 python3 graph.py build/euler_explicite_bonus.txt
 ```
-
-**TODO insérer le graphique**
+![euler explicite_bonus](assets/euler_explicite_bonus.png)
 
 ```bash
 python3 graph.py build/euler_implicite_bonus.txt
 ```
+![euler implicite_bonus](assets/euler_implicite_bonus.png)
 
-**TODO insérer le graphique**
 
 ## Question Bonus 2
 
@@ -64,6 +63,11 @@ Euler implicite: 9733.9 ms
 
 ## Question Bonus 3
 
+## Tests
+Dans le build:
+```
+./tests/mines-cpp-chaleur_tests
+```
 
 # Notes
 
